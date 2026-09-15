@@ -1,6 +1,3 @@
-Yes bro 👍 Here is the **complete `README.md` in one single section**, ready to copy and upload directly to GitHub. I’ve kept the **same writing style and flow as your reference README**, but adapted it to your **EtherChannel Configuration Using PAgP** project.
-
-````markdown
 # 🔗 EtherChannel Configuration Using PAgP
 
 ## 📌 Project Overview
@@ -15,12 +12,11 @@ The project also focuses on **PAgP negotiation modes, channel groups, Port-Chann
 
 > 🎯 **Project Focus:** EtherChannel + PAgP + Port-Channel + Trunking + Link Redundancy
 
-
 # 📋 Case Study
 
 A company requires reliable and higher-bandwidth connections between its network switches.
 
-Multiple physical links are available between the switches. If these links are configured individually, **Spanning Tree Protocol (STP)** may block some redundant links to prevent Layer 2 loops.
+Multiple physical links are available between the switches. If these links are configured individually, **Spanning Tree Protocol (STP)** may block redundant links to prevent Layer 2 loops.
 
 To make better use of the available physical links, the company wants to combine them into a single logical connection using **EtherChannel**.
 
@@ -36,25 +32,23 @@ For this project, **PAgP** is used to negotiate and establish EtherChannel betwe
 6. 🚀 Multiple physical links should provide increased bandwidth
 7. 🧪 EtherChannel operation must be verified using Cisco IOS commands
 
-
 # 🎯 Project Objectives
 
 By completing this project, you will learn how to:
 
-- 🔹 Understand the purpose of EtherChannel
-- 🔹 Understand how PAgP works
-- 🔹 Understand PAgP negotiation modes
-- 🔹 Configure PAgP using `desirable` and `auto` modes
-- 🔹 Create EtherChannel using channel groups
-- 🔹 Configure Port-Channel interfaces
-- 🔹 Configure EtherChannel as a trunk
-- 🔹 Combine multiple physical interfaces into one logical link
-- 🔹 Understand EtherChannel and STP interaction
-- 🔹 Improve bandwidth utilization between switches
-- 🔹 Provide link redundancy
-- 🔹 Verify EtherChannel operation
-- 🔹 Troubleshoot EtherChannel configuration issues
-
+* 🔹 Understand the purpose of EtherChannel
+* 🔹 Understand how PAgP works
+* 🔹 Understand PAgP negotiation modes
+* 🔹 Configure PAgP using `desirable` and `auto` modes
+* 🔹 Create EtherChannel using channel groups
+* 🔹 Configure Port-Channel interfaces
+* 🔹 Configure EtherChannel as a trunk
+* 🔹 Combine multiple physical interfaces into one logical link
+* 🔹 Understand EtherChannel and STP interaction
+* 🔹 Improve bandwidth utilization between switches
+* 🔹 Provide link redundancy
+* 🔹 Verify EtherChannel operation
+* 🔹 Troubleshoot EtherChannel configuration issues
 
 # 🏢 Network Design
 
@@ -73,7 +67,7 @@ Each connection contains **3 physical links**, which are bundled together to for
                          │   Port-Channel 2         │
                          └──────────┬───────┬───────┘
                                     │       │
-                         Group 1    │       │    Group 2
+                         Group 1     │       │    Group 2
                                     │       │
                      ┌──────────────┘       └──────────────┐
                      │                                     │
@@ -87,98 +81,146 @@ Each connection contains **3 physical links**, which are bundled together to for
 
                    PAgP                                  PAgP
               EtherChannel                         EtherChannel
-````
+```
 
-### Group 1
+# 🔗 EtherChannel Concept
 
-Switch0 is connected to the central switch using three physical interfaces.
+EtherChannel combines multiple physical interfaces into a **single logical interface**.
+
+For example, three physical links can be bundled together:
+
+```text
+Physical Links
+
+Fa0/1 ─────────────────────── Fa0/1
+Fa0/2 ─────────────────────── Fa0/2
+Fa0/3 ─────────────────────── Fa0/3
+          │
+          ▼
+     EtherChannel
+          │
+          ▼
+    Port-Channel 1
+```
+
+The switches treat the bundled links as one logical connection.
+
+This allows the network to use multiple physical links while reducing the impact of STP blocking individual redundant links.
+
+# 📡 PAgP — Port Aggregation Protocol
+
+**PAgP (Port Aggregation Protocol)** is a **Cisco proprietary protocol** used to negotiate EtherChannel between compatible Cisco devices.
+
+PAgP automatically determines whether the interfaces can form an EtherChannel based on their configuration.
+
+### PAgP Modes
+
+| Mode        | Description                                    |
+| ----------- | ---------------------------------------------- |
+| `desirable` | Actively attempts to negotiate an EtherChannel |
+| `auto`      | Passively waits for PAgP negotiation           |
+
+### PAgP Compatibility
+
+| Switch A    | Switch B    | Result                       |
+| ----------- | ----------- | ---------------------------- |
+| `desirable` | `desirable` | ✅ EtherChannel forms         |
+| `desirable` | `auto`      | ✅ EtherChannel forms         |
+| `auto`      | `desirable` | ✅ EtherChannel forms         |
+| `auto`      | `auto`      | ❌ EtherChannel does not form |
+
+> 💡 **Key Point:** At least one side must use `desirable` for PAgP negotiation to establish the EtherChannel.
+
+# 🌐 EtherChannel and Trunking
+
+The EtherChannel interfaces in this project are configured as **trunk links**.
+
+Instead of configuring each physical interface individually as a trunk after creating the EtherChannel, the logical **Port-Channel interface** is configured as the trunk.
+
+```cisco
+interface port-channel 1
+switchport mode trunk
+```
+
+The same concept is applied to Port-Channel 2.
+
+```cisco
+interface port-channel 2
+switchport mode trunk
+```
+
+This allows the EtherChannel to carry traffic for multiple VLANs between the switches.
+
+# 🔄 STP Before EtherChannel
+
+Before EtherChannel is configured, multiple physical connections between switches can create a Layer 2 loop.
+
+STP detects the redundant paths and may place some interfaces into a blocking state.
 
 ```text
 Switch0                         Central Switch
 
-Fa0/1 ───────────────────────── Gi1/0/1
-Fa0/2 ───────────────────────── Gi1/0/2
-Fa0/3 ───────────────────────── Gi1/0/3
+Fa0/1  🟢──────────────────────── Fa0/1
+Fa0/2  🟠──────────────────────── Fa0/2
+Fa0/3  🟠──────────────────────── Fa0/3
 
-              ↓
-
-        Port-Channel 1
-         Channel Group 1
+        STP blocks redundant links
 ```
 
-### Group 2
+In this situation, only one physical link may be forwarding traffic while the other links remain blocked.
 
-Switch1 is connected to the central switch using three physical interfaces.
+This prevents loops but does not allow all available physical links to be used for forwarding.
+
+# 🚀 STP After EtherChannel
+
+After EtherChannel is configured, the three physical links are bundled into one logical Port-Channel.
 
 ```text
-Central Switch                    Switch1
+Switch0                         Central Switch
 
-Gi1/0/4 ───────────────────────── Fa0/1
-Gi1/0/5 ───────────────────────── Fa0/2
-Gi1/0/6 ───────────────────────── Fa0/3
-
-              ↓
-
-        Port-Channel 2
-         Channel Group 2
+Fa0/1  ══════════════════════════
+Fa0/2  ══════════════════════════
+Fa0/3  ══════════════════════════
+             │
+             ▼
+       Port-Channel 1
 ```
 
-# 🖥️ Switch Structure
+STP sees the bundled EtherChannel as a **single logical link** instead of three independent links.
 
-## 🔀 Switch0
+This allows the physical links within the EtherChannel to participate in forwarding as part of the logical channel.
 
-* 🔀 Cisco 2960 Layer 2 Switch
-* 🔗 3 physical links connected to the central switch
-* 📡 PAgP mode: `desirable`
-* 🔢 Channel Group: `1`
-* 🌐 Port-Channel: `Port-channel 1`
+# ⚙️ Configuration Process
 
-### Interfaces
+The configuration is divided into the following steps:
 
-```text
-Fa0/1
-Fa0/2
-Fa0/3
-```
+1. 🖥️ Build the network topology
+2. 🔌 Identify the physical interfaces
+3. 🌐 Identify the switch-to-switch trunk links
+4. 🔗 Configure PAgP channel groups
+5. ⚙️ Configure PAgP negotiation modes
+6. 🔀 Configure Port-Channel interfaces
+7. 🌐 Configure Port-Channels as trunk links
+8. 🧪 Verify EtherChannel operation
 
-These interfaces are combined into:
+# 1️⃣ Build the Network Topology
 
-```text
-Port-channel 1
-```
+Create the three-switch topology in Cisco Packet Tracer.
 
-## 🌐 Central Switch
+The network contains:
 
-* 🌐 Cisco 3650-24TT Multilayer Switch
-* 🔗 Connected to Switch0 using Group 1
-* 🔗 Connected to Switch1 using Group 2
-* 📡 PAgP configured for both EtherChannel groups
+* **1 × Cisco 3650 multilayer switch**
+* **2 × Cisco 2960 Layer 2 switches**
+* **3 physical links** between the central switch and Switch0
+* **3 physical links** between the central switch and Switch1
 
-### Group 1 Interfaces
+Each set of three physical links will be configured as an EtherChannel.
 
-```text
-Gi1/0/1
-Gi1/0/2
-Gi1/0/3
-```
+# 2️⃣ Identify the Physical Interfaces
 
-### Group 2 Interfaces
+Identify the interfaces connecting each switch.
 
-```text
-Gi1/0/4
-Gi1/0/5
-Gi1/0/6
-```
-
-## 🔀 Switch1
-
-* 🔀 Cisco 2960 Layer 2 Switch
-* 🔗 3 physical links connected to the central switch
-* 📡 PAgP mode: `auto`
-* 🔢 Channel Group: `2`
-* 🌐 Port-Channel: `Port-channel 2`
-
-### Interfaces
+For example, on a Layer 2 switch:
 
 ```text
 Fa0/1
@@ -186,789 +228,404 @@ Fa0/2
 Fa0/3
 ```
 
-These interfaces are combined into:
+These three interfaces will be combined into **Channel Group 1**.
+
+The second switch can use another group:
 
 ```text
-Port-channel 2
+Fa0/1
+Fa0/2
+Fa0/3
 ```
 
-# 📡 PAgP — Port Aggregation Protocol
+These interfaces will be combined into **Channel Group 2**.
 
-**PAgP (Port Aggregation Protocol)** is a Cisco-proprietary protocol used to dynamically negotiate and establish EtherChannel between compatible Cisco switches.
+On the central multilayer switch, the corresponding GigabitEthernet interfaces are used for the EtherChannel connections.
 
-PAgP uses negotiation modes to determine how the switches establish the EtherChannel.
+# 3️⃣ Configure PAgP — Switch0
 
-The two PAgP modes used in this project are:
+Switch0 is connected to the central switch using three physical interfaces.
+
+Configure the interfaces as a PAgP EtherChannel using **Channel Group 1**.
+
+```cisco
+enable
+configure terminal
+
+interface range fa0/1 - 3
+channel-group 1 mode desirable
+exit
+```
+
+The `desirable` mode actively attempts to establish the PAgP EtherChannel.
+
+# 4️⃣ Configure Port-Channel 1
+
+After assigning the physical interfaces to Channel Group 1, configure the logical Port-Channel interface.
+
+```cisco
+interface port-channel 1
+switchport mode trunk
+exit
+```
+
+### Configuration Result
 
 ```text
-desirable
-auto
+Fa0/1 ─┐
+Fa0/2 ─┼── Channel Group 1 ── Port-Channel 1
+Fa0/3 ─┘
 ```
 
-# 1️⃣ PAgP Desirable Mode
+Port-Channel 1 now operates as a trunk.
 
-The `desirable` mode actively attempts to negotiate and establish an EtherChannel.
+# 5️⃣ Configure PAgP — Switch1
+
+Switch1 uses three physical interfaces to create **Channel Group 2**.
+
+Configure PAgP using `auto` mode.
+
+```cisco
+enable
+configure terminal
+
+interface range fa0/1 - 3
+channel-group 2 mode auto
+exit
+```
+
+The `auto` mode waits for the neighboring switch to initiate PAgP negotiation.
+
+# 6️⃣ Configure Port-Channel 2
+
+Configure the logical Port-Channel interface as a trunk.
+
+```cisco
+interface port-channel 2
+switchport mode trunk
+exit
+```
+
+### Configuration Result
 
 ```text
-desirable
-     ↓
-Actively negotiates
-     ↓
-EtherChannel
+Fa0/1 ─┐
+Fa0/2 ─┼── Channel Group 2 ── Port-Channel 2
+Fa0/3 ─┘
 ```
 
-A switch configured with `desirable` can initiate the PAgP negotiation.
+# 7️⃣ Configure the Central Multilayer Switch
 
-# 2️⃣ PAgP Auto Mode
+The central Cisco 3650 switch connects to both Layer 2 switches.
 
-The `auto` mode passively waits for a PAgP negotiation request from the other switch.
+Two separate EtherChannels are configured:
+
+* **Port-Channel 1 → Switch0**
+* **Port-Channel 2 → Switch1**
+
+## 🔹 Port-Channel 1
+
+Configure the three interfaces connected to Switch0.
+
+```cisco
+enable
+configure terminal
+
+interface range gigabitEthernet 1/0/1 - 3
+channel-group 1 mode auto
+exit
+```
+
+Configure Port-Channel 1 as a trunk.
+
+```cisco
+interface port-channel 1
+switchport mode trunk
+exit
+```
+
+## 🔹 Port-Channel 2
+
+Configure the three interfaces connected to Switch1.
+
+```cisco
+interface range gigabitEthernet 1/0/4 - 6
+channel-group 2 mode desirable
+exit
+```
+
+Configure Port-Channel 2 as a trunk.
+
+```cisco
+interface port-channel 2
+switchport mode trunk
+exit
+```
+
+# 🔀 Final PAgP Configuration
+
+The final PAgP negotiation relationships are:
 
 ```text
-auto
- ↓
-Waits for negotiation
- ↓
-EtherChannel
+                    Central Switch
+                    Cisco 3650
+                  ┌───────────────┐
+                  │               │
+          Po1     │               │     Po2
+        ──────────┤               ├──────────
+                  │               │
+                  └───────┬───────┘
+                          │
+              ┌───────────┴───────────┐
+              │                       │
+          Switch0                  Switch1
+          Cisco 2960               Cisco 2960
+
+       Desirable  ◄──► Auto     Auto  ◄──► Desirable
+
+              PAgP                    PAgP
+           Channel 1               Channel 2
 ```
 
-The `auto` mode does not actively initiate the negotiation.
+# 📊 Channel Group Mapping
 
-# 📊 PAgP Mode Compatibility
+| Connection               | Physical Links | Channel Group | Port-Channel | PAgP Mode        |
+| ------------------------ | -------------: | ------------: | -----------: | ---------------- |
+| Switch0 ↔ Central Switch |              3 |             1 |          Po1 | Desirable ↔ Auto |
+| Switch1 ↔ Central Switch |              3 |             2 |          Po2 | Auto ↔ Desirable |
 
-| Switch A    | Switch B    | EtherChannel    |
-| ----------- | ----------- | --------------- |
-| `desirable` | `desirable` | ✅ Forms         |
-| `desirable` | `auto`      | ✅ Forms         |
-| `auto`      | `auto`      | ❌ Does not form |
+This creates two independent EtherChannel connections.
 
-Therefore, at least one side must use:
+# 🧪 Verification
+
+After completing the configuration, verify the EtherChannel operation using Cisco IOS commands.
+
+## 🔍 Verify EtherChannel Summary
+
+```cisco
+show etherchannel summary
+```
+
+This command displays:
+
+* EtherChannel group number
+* Port-Channel number
+* Protocol
+* Member interfaces
+* Channel status
+
+Expected protocol:
 
 ```text
-mode desirable
+PAgP
 ```
 
-for PAgP negotiation to successfully establish the EtherChannel.
-
-# 🔗 EtherChannel
-
-EtherChannel combines multiple physical interfaces into one logical interface.
-
-Before EtherChannel:
+Example:
 
 ```text
-Switch A
-   │
-   ├──────────── Link 1
-   ├──────────── Link 2
-   └──────────── Link 3
+Group  Port-channel  Protocol
+-----  -------------  --------
+1      Po1(SU)        PAgP
+2      Po2(SU)        PAgP
 ```
 
-The links are separate physical connections.
+## 🔍 Verify Trunk Configuration
 
-After EtherChannel:
+```cisco
+show interfaces trunk
+```
+
+This command verifies that the Port-Channel interfaces are operating as trunk links.
+
+## 🔍 Verify Port-Channel Interface
+
+```cisco
+show interfaces port-channel 1
+```
+
+For the second EtherChannel:
+
+```cisco
+show interfaces port-channel 2
+```
+
+## 🔍 Verify Interface Status
+
+```cisco
+show interfaces status
+```
+
+This can be used to check the status of the physical interfaces participating in the EtherChannel.
+
+## 🔍 Verify Running Configuration
+
+```cisco
+show running-config
+```
+
+This allows the configured EtherChannel, Port-Channel, and trunk settings to be reviewed.
+
+# 🛠️ Troubleshooting
+
+If the EtherChannel does not form correctly, check the following:
+
+### 1. 🔗 Check PAgP Modes
+
+Make sure the two sides use a compatible combination.
 
 ```text
-Switch A
-   │
-   ├────────────┐
-   ├────────────┤
-   └────────────┘
-        ↓
-   EtherChannel
-        ↓
-   Port-Channel
+Desirable + Desirable → ✅
+Desirable + Auto      → ✅
+Auto + Auto           → ❌
 ```
 
-The physical interfaces still exist, but they operate together as one logical connection.
+### 2. 🔌 Check Physical Interfaces
 
-# 🚀 Benefits of EtherChannel
+Make sure the correct interfaces are included in the channel group.
 
-EtherChannel provides several important networking benefits.
+```cisco
+interface range fa0/1 - 3
+```
 
-### 🔹 Increased Bandwidth
+### 3. 🔢 Check Channel Group Numbers
 
-Multiple physical links are combined to provide higher overall bandwidth between switches.
+Make sure the correct interfaces are assigned to the intended channel group.
 
-In this project:
+```cisco
+channel-group 1 mode desirable
+```
+
+### 4. 🌐 Check Trunk Configuration
+
+Verify that the Port-Channel is configured as a trunk.
+
+```cisco
+interface port-channel 1
+switchport mode trunk
+```
+
+### 5. 🧪 Check EtherChannel Status
+
+Use:
+
+```cisco
+show etherchannel summary
+```
+
+Confirm that the member interfaces are successfully bundled.
+
+# 📈 Benefits Achieved
+
+After implementing EtherChannel, the network achieves:
+
+| Feature          | Before EtherChannel               | After EtherChannel                 |
+| ---------------- | --------------------------------- | ---------------------------------- |
+| Physical links   | Separate                          | Bundled                            |
+| Logical links    | Multiple                          | Single Port-Channel                |
+| STP handling     | Individual links                  | Logical EtherChannel               |
+| Link utilization | Limited by STP blocking           | Multiple links can participate     |
+| Redundancy       | Available but may be blocked      | Available within EtherChannel      |
+| Bandwidth        | Limited to active forwarding link | Increased through link aggregation |
+| Management       | Multiple individual interfaces    | Logical Port-Channel               |
+
+> 🚀 EtherChannel provides both **link aggregation and redundancy** while allowing multiple physical links to operate as one logical connection.
+
+# 🧠 Key Concepts
+
+### 🔗 EtherChannel
+
+Combines multiple physical interfaces into a single logical connection.
+
+### 📡 PAgP
+
+Cisco proprietary protocol used to negotiate EtherChannel.
+
+### 🔄 Desirable
+
+Actively attempts to establish a PAgP EtherChannel.
+
+### ⏳ Auto
+
+Passively waits for PAgP negotiation.
+
+### 🔀 Channel Group
+
+Logical grouping used to combine physical interfaces.
+
+### 🌐 Port-Channel
+
+The logical interface created by EtherChannel.
+
+### 🚪 Trunk
+
+Allows multiple VLANs to travel across the EtherChannel connection.
+
+### 🛡️ STP
+
+Prevents Layer 2 loops and treats an EtherChannel as a single logical path.
+
+# 📝 Important Commands
+
+```cisco
+enable
+configure terminal
+
+interface range fa0/1 - 3
+channel-group 1 mode desirable
+exit
+
+interface port-channel 1
+switchport mode trunk
+exit
+
+show etherchannel summary
+show interfaces trunk
+show interfaces port-channel 1
+show interfaces status
+show running-config
+```
+
+# 🎯 Project Outcome
+
+The project successfully demonstrates how multiple physical switch-to-switch links can be combined into logical EtherChannel connections using **PAgP**.
+
+Two EtherChannel groups were configured using three physical links per connection.
 
 ```text
 3 Physical Links
        ↓
-   EtherChannel
-       ↓
-1 Logical Connection
-```
-
-### 🔹 Redundancy
-
-If one physical link in the EtherChannel fails, the remaining links can continue carrying traffic.
-
-```text
-Link 1 ──────── ✅
-Link 2 ──────── ❌
-Link 3 ──────── ✅
-
-        ↓
-
-EtherChannel
-        ↓
-
-Connection remains available
-```
-
-### 🔹 STP Optimization
-
-Without EtherChannel, STP may treat parallel links as separate paths and block redundant links.
-
-With EtherChannel, the bundled physical links are represented as a **single logical Port-Channel** to STP.
-
-```text
-Multiple Physical Links
-          ↓
-     EtherChannel
-          ↓
-   Single Logical Link
-          ↓
-          STP
-```
-
-# ⚙️ EtherChannel Configuration
-
-## 1️⃣ Configure Switch0 — Group 1
-
-Enter privileged EXEC mode:
-
-```bash
-enable
-```
-
-Enter global configuration mode:
-
-```bash
-configure terminal
-```
-
-Select the three physical interfaces:
-
-```bash
-interface range fastEthernet 0/1-3
-```
-
-Configure PAgP:
-
-```bash
-channel-group 1 mode desirable
-```
-
-Exit:
-
-```bash
-exit
-```
-
-The three interfaces are now assigned to:
-
-```text
-Channel Group 1
-```
-
-This creates:
-
-```text
-Port-channel 1
-```
-
-## 2️⃣ Configure Central Switch — Group 1
-
-Enter global configuration mode:
-
-```bash
-configure terminal
-```
-
-Select the three interfaces connected to Switch0:
-
-```bash
-interface range gigabitEthernet 1/0/1-3
-```
-
-Configure PAgP:
-
-```bash
-channel-group 1 mode auto
-```
-
-Exit:
-
-```bash
-exit
-```
-
-The two switches now negotiate using:
-
-```text
-Switch0        Central Switch
-desirable  ↔  auto
-```
-
-The EtherChannel is established as:
-
-```text
-Port-channel 1
-```
-
-# 🌐 Configure Port-Channel 1 as Trunk
-
-Enter the Port-Channel interface:
-
-```bash
-interface port-channel 1
-```
-
-Configure trunk mode:
-
-```bash
-switchport mode trunk
-```
-
-Exit:
-
-```bash
-exit
-```
-
-Port-Channel 1 now operates as a logical trunk connection.
-
-# 3️⃣ Configure Central Switch — Group 2
-
-Select the three interfaces connected to Switch1:
-
-```bash
-interface range gigabitEthernet 1/0/4-6
-```
-
-Configure PAgP:
-
-```bash
-channel-group 2 mode desirable
-```
-
-Exit:
-
-```bash
-exit
-```
-
-The interfaces are combined into:
-
-```text
-Channel Group 2
-```
-
-This creates:
-
-```text
-Port-channel 2
-```
-
-# 4️⃣ Configure Switch1 — Group 2
-
-Enter global configuration mode:
-
-```bash
-configure terminal
-```
-
-Select the three physical interfaces:
-
-```bash
-interface range fastEthernet 0/1-3
-```
-
-Configure PAgP:
-
-```bash
-channel-group 2 mode auto
-```
-
-Exit:
-
-```bash
-exit
-```
-
-The two switches now negotiate using:
-
-```text
-Central Switch       Switch1
-desirable       ↔    auto
-```
-
-The EtherChannel is established as:
-
-```text
-Port-channel 2
-```
-
-# 🌐 Configure Port-Channel 2 as Trunk
-
-Enter the Port-Channel interface:
-
-```bash
-interface port-channel 2
-```
-
-Configure trunk mode:
-
-```bash
-switchport mode trunk
-```
-
-Exit:
-
-```bash
-exit
-```
-
-Port-Channel 2 now operates as a logical trunk connection.
-
-# ⚠️ EtherChannel Configuration Requirements
-
-For an EtherChannel to form successfully, the physical interfaces should have compatible configurations.
-
-Important parameters include:
-
-* 🔹 Same speed
-* 🔹 Same duplex
-* 🔹 Same switchport mode
-* 🔹 Same access VLAN when operating as access ports
-* 🔹 Same native VLAN when operating as trunks
-* 🔹 Compatible allowed VLAN configuration
-* 🔹 Same EtherChannel protocol
-* 🔹 Correct PAgP negotiation modes
-
-The interfaces participating in the same EtherChannel should have consistent configurations.
-
-# 🔍 Verify EtherChannel
-
-After configuring EtherChannel, the configuration should be verified.
-
-## 1️⃣ Verify EtherChannel Summary
-
-Use:
-
-```bash
-show etherchannel summary
-```
-
-This command provides information about:
-
-* Channel group
-* Port-Channel interface
-* Protocol
-* Member interfaces
-* EtherChannel status
-
-An operational EtherChannel should show the Port-Channel and its member interfaces as active.
-
-## 2️⃣ Verify Trunk Interfaces
-
-Use:
-
-```bash
-show interfaces trunk
-```
-
-This command verifies:
-
-* Trunk status
-* Native VLAN
-* Allowed VLANs
-* Port-Channel trunk operation
-
-## 3️⃣ Verify Port-Channel 1
-
-Use:
-
-```bash
-show interfaces port-channel 1
-```
-
-This displays information about:
-
-```text
-Port-channel 1
-```
-
-including its operational status and interface information.
-
-## 4️⃣ Verify Port-Channel 2
-
-Use:
-
-```bash
-show interfaces port-channel 2
-```
-
-This verifies:
-
-```text
-Port-channel 2
-```
-
-## 5️⃣ Verify Spanning Tree
-
-Use:
-
-```bash
-show spanning-tree
-```
-
-This helps verify how STP views the EtherChannel.
-
-Instead of treating each physical link as an independent path, STP sees the EtherChannel as a logical Port-Channel.
-
-# 🧪 Connectivity and EtherChannel Testing
-
-After configuring the EtherChannel, the network should be checked to make sure the logical connections are operating correctly.
-
-## Test 1 — EtherChannel Summary
-
-Run:
-
-```bash
-show etherchannel summary
-```
-
-Expected result:
-
-```text
-Port-channel 1    →    Operational
-Port-channel 2    →    Operational
-```
-
-The member interfaces should appear as part of their respective channel groups.
-
-```text
-Fa0/1
-Fa0/2
-Fa0/3
-   ↓
-Po1
-```
-
-and:
-
-```text
-Fa0/1
-Fa0/2
-Fa0/3
-   ↓
-Po2
-```
-
-## Test 2 — Trunk Verification
-
-Run:
-
-```bash
-show interfaces trunk
-```
-
-Confirm that the Port-Channel interfaces are operating as trunks.
-
-```text
-Port-channel 1
-Port-channel 2
-```
-
-should appear as trunk interfaces.
-
-## Test 3 — Physical Link Failure
-
-One physical link can be disconnected to test redundancy.
-
-For example:
-
-```text
-Link 1 ──────── ❌
-Link 2 ──────── ✅
-Link 3 ──────── ✅
-```
-
-The EtherChannel should continue operating through the remaining physical links.
-
-This demonstrates the redundancy provided by EtherChannel.
-
-## Test 4 — STP Verification
-
-Run:
-
-```bash
-show spanning-tree
-```
-
-Verify that the Port-Channel is treated as a logical connection.
-
-```text
-Physical Links
-      ↓
-EtherChannel
-      ↓
-Port-Channel
-      ↓
-STP
-```
-
-# 🔍 Verification Checklist
-
-| Requirement                       | Status |
-| --------------------------------- | ------ |
-| Three switches created            | ✅      |
-| Multiple physical links connected | ✅      |
-| PAgP configured                   | ✅      |
-| `desirable` mode configured       | ✅      |
-| `auto` mode configured            | ✅      |
-| Channel Group 1 created           | ✅      |
-| Channel Group 2 created           | ✅      |
-| Port-Channel 1 created            | ✅      |
-| Port-Channel 2 created            | ✅      |
-| EtherChannel configured as trunk  | ✅      |
-| EtherChannel status verified      | ✅      |
-| Trunk status verified             | ✅      |
-| STP operation verified            | ✅      |
-| EtherChannel redundancy tested    | ✅      |
-
-# 🧠 Key Networking Concepts Learned
-
-### 📌 EtherChannel
-
-EtherChannel combines multiple physical interfaces into one logical connection.
-
-```text
-Multiple Physical Links
-          ↓
-     EtherChannel
-          ↓
-     Port-Channel
-```
-
-### 📌 PAgP
-
-PAgP stands for:
-
-```text
-Port Aggregation Protocol
-```
-
-It is a Cisco-proprietary protocol used to negotiate EtherChannel.
-
-### 📌 Channel Group
-
-A channel group identifies the physical interfaces that are bundled together.
-
-Example:
-
-```bash
-channel-group 1 mode desirable
-```
-
-The interfaces become members of:
-
-```text
-Channel Group 1
-```
-
-### 📌 Port-Channel
-
-A Port-Channel is the logical interface created after physical interfaces are bundled together.
-
-Example:
-
-```text
-Physical Interfaces
-        ↓
    Channel Group
-        ↓
+       ↓
+   PAgP Negotiation
+       ↓
    Port-Channel
+       ↓
+    Trunk Link
+       ↓
+Improved Bandwidth
++ Link Redundancy
 ```
 
-### 📌 PAgP Desirable
+The configuration was verified using Cisco IOS commands, confirming the operation of **PAgP, Port-Channels, and trunk links**.
 
-`desirable` actively attempts to negotiate EtherChannel.
+# 🚀 Conclusion
 
-```text
-desirable
-    ↓
-Active negotiation
-```
+This project provides practical experience in configuring **EtherChannel using PAgP** in Cisco Packet Tracer.
 
-### 📌 PAgP Auto
+By combining multiple physical interfaces into logical Port-Channels, the network can make better use of available links while maintaining redundancy.
 
-`auto` waits for the other switch to initiate negotiation.
+The project also demonstrates the relationship between **EtherChannel, PAgP, STP, channel groups, Port-Channels, and trunking**, which are important concepts in Cisco switching and enterprise network design.
 
-```text
-auto
- ↓
-Waits for negotiation
-```
-
-### 📌 Trunking
-
-A trunk link allows multiple VLANs to travel across the same physical/logical connection.
-
-In this project, the EtherChannel Port-Channel interfaces are configured as trunks.
-
-```text
-VLAN 10
-VLAN 20
-VLAN 30
-   ↓
-Trunk
-   ↓
-Port-Channel
-```
-
-### 📌 STP and EtherChannel
-
-STP treats the EtherChannel as a single logical link instead of seeing every physical member link as a separate path.
-
-This allows the network to make better use of the available physical links while maintaining Layer 2 loop prevention.
-
-# 🧩 Real-World Networking Concept
-
-EtherChannel is commonly used in enterprise networks where switches require **higher bandwidth and redundancy** between each other.
-
-Instead of using only one physical link:
-
-```text
-Switch A
-   │
-   │
-Switch B
-```
-
-multiple links can be combined:
-
-```text
-Switch A
-   │
-   ├───────────────┐
-   ├───────────────┤
-   └───────────────┘
-          │
-       Switch B
-```
-
-This provides a logical connection with multiple physical links working together.
-
-EtherChannel can be useful for:
-
-* 🚀 Higher bandwidth between switches
-* 🛡️ Link redundancy
-* 🔄 Improved network availability
-* 🌐 Trunk connectivity
-* 🌳 Better interaction with STP
-* 📈 Network scalability
-
-In enterprise environments, EtherChannel can be used between:
-
-```text
-Access Switch
-      ↓
-Distribution Switch
-      ↓
-Core Switch
-```
-
-to provide reliable and higher-capacity network connections.
-
-# 🛠️ Tools Used
+# 📚 Technologies & Tools
 
 * 🖥️ Cisco Packet Tracer
-* 🔀 Cisco Catalyst 2960 Switch
-* 🌐 Cisco Catalyst 3650 Multilayer Switch
+* 🔀 Cisco Switching
 * 🔗 EtherChannel
 * 📡 PAgP
 * 🌐 VLAN Trunking
-* 🌳 Spanning Tree Protocol
+* 🛡️ Spanning Tree Protocol
 * 💻 Cisco IOS CLI
 
-# 📁 Suggested GitHub Project Structure
+# 🏷️ Tags
 
-```text
-EtherChannel-PAgP/
-│
-├── README.md
-│
-├── topology/
-│   └── etherchannel-topology.png
-│
-├── configurations/
-│   ├── switch0-config.txt
-│   ├── central-switch-config.txt
-│   └── switch1-config.txt
-│
-└── packet-tracer/
-    └── etherchannel-pagp.pkt
-```
-
-# 🎓 Learning Outcome
-
-After completing this project, I can:
-
-> ✅ Understand EtherChannel, configure PAgP negotiation modes, combine multiple physical interfaces into a logical Port-Channel, configure EtherChannel as a trunk, verify EtherChannel operation, understand EtherChannel and STP interaction, and troubleshoot basic EtherChannel configuration issues.
-
-# 🚀 Future Improvements
-
-This EtherChannel lab can be expanded into a more realistic enterprise network by adding:
-
-* 🔀 VLAN segmentation
-* 🌐 Inter-VLAN routing
-* 🔗 LACP EtherChannel
-* 🔐 ACLs
-* 🛡️ Port security
-* 🔑 SSH remote management
-* 🌳 Advanced STP configuration
-* 🖥️ DHCP services
-* 📡 Wireless access points
-* 🔄 Redundant routers
-* 📊 Network monitoring
-* 🛡️ Network security policies
-
-# 🏁 Conclusion
-
-This project demonstrates how multiple physical network links can be combined into a single logical connection using **EtherChannel** and **PAgP** in Cisco Packet Tracer.
-
-The project combines:
-
-```text
-Network Requirement
-        ↓
-Topology Design
-        ↓
-Multiple Physical Links
-        ↓
-PAgP Configuration
-        ↓
-Channel Groups
-        ↓
-Port-Channel
-        ↓
-Trunk Configuration
-        ↓
-EtherChannel Verification
-        ↓
-STP Verification
-```
-
-The key concept in this project is understanding how **EtherChannel converts multiple physical links into one logical connection**, allowing the network to improve bandwidth utilization and provide link redundancy.
-
-The project also demonstrates how **PAgP `desirable` and `auto` modes** can be used to negotiate EtherChannel between Cisco switches.
-
-**Project Status:** 🟢 Completed
-
-**Primary Skills:** `EtherChannel` `PAgP` `Port-Channel` `Trunking` `Switching` `STP` `Network Troubleshooting`
-
-```
-```
+`#Networking` `#Cisco` `#CCNA` `#EtherChannel` `#PAgP` `#Switching` `#PortChannel` `#Trunking` `#STP` `#CiscoPacketTracer`
